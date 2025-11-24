@@ -38,13 +38,25 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="glass-panel w-full max-w-md rounded-2xl shadow-xl overflow-hidden p-8">
         
-        <!-- Language Selector -->
+        <!-- Help Button (Top Left) -->
+        <div class="absolute top-4 left-4">
+            <button onclick="toggleHelp()" class="text-slate-400 hover:text-blue-600 transition-colors" title="Help / Info">
+                <i class="fa-solid fa-circle-question text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Language Selector (Top Right) -->
         <div class="absolute top-4 right-4">
             <select id="languageSelect" onchange="changeLanguage()" class="bg-white/50 border border-slate-200 text-slate-600 text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
                 <option value="en">🇺🇸 English</option>
@@ -54,7 +66,7 @@
         </div>
 
         <!-- Header -->
-        <div class="text-center mb-8">
+        <div class="text-center mb-8 mt-4">
             <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
                 <i class="fa-solid fa-shirt text-2xl"></i>
             </div>
@@ -64,12 +76,34 @@
 
         <!-- Input Section -->
         <div class="space-y-4">
+            
+            <!-- Time Selection -->
+            <div class="bg-blue-50/50 p-3 rounded-lg flex flex-wrap items-center justify-center gap-4">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="radio" name="timeFrame" value="current" checked class="accent-blue-600 w-4 h-4 cursor-pointer">
+                    <span id="ui-time-now" class="text-sm text-slate-600 font-medium group-hover:text-blue-600 transition-colors">Right Now</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="radio" name="timeFrame" value="workday" class="accent-blue-600 w-4 h-4 cursor-pointer">
+                    <span id="ui-time-work" class="text-sm text-slate-600 font-medium group-hover:text-blue-600 transition-colors">Workday (9-5)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="radio" name="timeFrame" value="nightout" class="accent-blue-600 w-4 h-4 cursor-pointer">
+                    <span id="ui-time-night" class="text-sm text-slate-600 font-medium group-hover:text-blue-600 transition-colors">Night Out</span>
+                </label>
+            </div>
+
             <div>
                 <label id="ui-label" for="cityInput" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Your Location</label>
                 <div class="relative">
                     <input type="text" id="cityInput" placeholder="e.g. New York, London, Tokyo" 
-                        class="w-full bg-slate-50 border border-slate-200 rounded-lg py-3 px-4 pl-10 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-lg py-3 px-4 pl-10 pr-12 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
                     <i class="fa-solid fa-location-dot absolute left-4 top-3.5 text-slate-400"></i>
+                    
+                    <!-- Location Button -->
+                    <button onclick="useDeviceLocation()" class="absolute right-3 top-2.5 p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all" title="Use My Location">
+                        <i class="fa-solid fa-location-crosshairs text-lg"></i>
+                    </button>
                 </div>
             </div>
 
@@ -84,6 +118,7 @@
         <div id="loader" class="hidden mt-6 text-center">
             <div class="loader mx-auto mb-2"></div>
             <p id="ui-loading" class="text-sm text-slate-400 animate-pulse">Checking the forecast...</p>
+            <p id="ui-wait-msg" class="text-xs text-slate-300 mt-1">(This might take a few seconds)</p>
         </div>
 
         <!-- Error / Warning State -->
@@ -126,11 +161,42 @@
         </div>
     </div>
 
+    <!-- HELP MODAL -->
+    <div id="helpModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 relative animate-fade-in">
+            <!-- Close X -->
+            <button onclick="toggleHelp()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <h2 id="ui-help-title" class="text-xl font-bold text-slate-800 mb-4">How it works</h2>
+            
+            <div class="space-y-4">
+                <div class="flex gap-3">
+                    <div class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold">1</div>
+                    <p id="ui-help-step1" class="text-sm text-slate-600 leading-snug pt-1">Enter your city or use the location button to find your spot.</p>
+                </div>
+                <div class="flex gap-3">
+                    <div class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold">2</div>
+                    <p id="ui-help-step2" class="text-sm text-slate-600 leading-snug pt-1">Choose when you need the outfit for (Now, Workday, or Night Out).</p>
+                </div>
+                <div class="flex gap-3">
+                    <div class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold">3</div>
+                    <p id="ui-help-step3" class="text-sm text-slate-600 leading-snug pt-1">Get AI-powered advice based on live weather data.</p>
+                </div>
+            </div>
+
+            <button onclick="toggleHelp()" id="ui-help-close" class="mt-6 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg transition-colors">
+                Got it
+            </button>
+        </div>
+    </div>
+
     <script>
         // ---------------------------------------------------------
         // Configuration
         // ---------------------------------------------------------
-        const apiKey = "AIzaSyAiyKpOuHhnH-6qen8DNlvqduY0fChLlRA"; 
+        const apiKey = '/api/weather';
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
         // ---------------------------------------------------------
@@ -144,13 +210,26 @@
                 placeholder: "e.g. New York, London, Tokyo",
                 btn: "Get Advice",
                 loading: "Checking the forecast...",
-                weatherTitle: "Current Weather",
+                waitMsg: "(This might take a few seconds)",
+                weatherTitle: "Weather Conditions",
                 outfitTitle: "Outfit Recommendations",
                 sources: "Sources:",
                 promptLang: "English",
                 emptyCity: "Please enter a city name.",
                 sampleWarning: "We couldn't find that location. Showing sample data for London instead.",
-                correctedPrefix: "Weather for: "
+                correctedPrefix: "Weather for: ",
+                locating: "Locating...",
+                geoError: "Unable to retrieve location.",
+                geoPermission: "Location permission denied.",
+                timeNow: "Right Now",
+                timeWork: "Workday (9-5)",
+                timeNight: "Night Out",
+                // Help Modal
+                helpTitle: "How it works",
+                helpStep1: "Enter your city or use the location button to find your spot.",
+                helpStep2: "Choose when you need the outfit for (Now, Workday, or Night Out).",
+                helpStep3: "Get AI-powered advice based on live weather data.",
+                helpClose: "Got it"
             },
             ru: {
                 title: "Гардероб",
@@ -159,13 +238,26 @@
                 placeholder: "напр. Москва, Алматы, Нью-Йорк",
                 btn: "Получить совет",
                 loading: "Проверяем погоду...",
-                weatherTitle: "Текущая погода",
+                waitMsg: "(Это может занять пару секунд)",
+                weatherTitle: "Погодные условия",
                 outfitTitle: "Рекомендации",
                 sources: "Источники:",
                 promptLang: "Russian",
                 emptyCity: "Пожалуйста, введите название города.",
                 sampleWarning: "Мы не нашли этот город. Показываем пример для Лондона.",
-                correctedPrefix: "Погода для: "
+                correctedPrefix: "Погода для: ",
+                locating: "Ищем...",
+                geoError: "Не удалось определить местоположение.",
+                geoPermission: "Доступ к геопозиции запрещен.",
+                timeNow: "Сейчас",
+                timeWork: "Рабочий день (9-5)",
+                timeNight: "Вечерний выход",
+                // Help Modal
+                helpTitle: "Как это работает",
+                helpStep1: "Введите город или используйте кнопку геолокации.",
+                helpStep2: "Выберите время (Сейчас, Рабочий день или Вечер).",
+                helpStep3: "Получите совет от ИИ на основе реальной погоды.",
+                helpClose: "Понятно"
             },
             kk: {
                 title: "Киім таңдау",
@@ -174,13 +266,26 @@
                 placeholder: "мыс. Астана, Алматы, Лондон",
                 btn: "Кеңес алу",
                 loading: "Болжам тексерілуде...",
-                weatherTitle: "Ағымдағы ауа райы",
+                waitMsg: "(Бірнеше секунд күте тұрыңыз)",
+                weatherTitle: "Ауа райы жағдайы",
                 outfitTitle: "Киім ұсыныстары",
                 sources: "Дереккөздер:",
                 promptLang: "Kazakh",
                 emptyCity: "Қаланың атын енгізіңіз.",
                 sampleWarning: "Бұл қала табылмады. Лондон үшін үлгі деректер көрсетілуде.",
-                correctedPrefix: "Ауа райы: "
+                correctedPrefix: "Ауа райы: ",
+                locating: "Іздеуде...",
+                geoError: "Орналасқан жерді анықтау мүмкін емес.",
+                geoPermission: "Орналасқан жерді пайдалануға рұқсат жоқ.",
+                timeNow: "Қазір",
+                timeWork: "Жұмыс күні (9-5)",
+                timeNight: "Кешкі серуен",
+                // Help Modal
+                helpTitle: "Қалай жұмыс істейді",
+                helpStep1: "Қаланы енгізіңіз немесе геолокацияны қолданыңыз.",
+                helpStep2: "Уақытты таңдаңыз (Қазір, Жұмыс күні немесе Кешкі серуен).",
+                helpStep3: "Ауа райына негізделген ИИ кеңесін алыңыз.",
+                helpClose: "Түсінікті"
             }
         };
 
@@ -196,9 +301,70 @@
             document.getElementById('cityInput').placeholder = t.placeholder;
             document.getElementById('ui-btn').textContent = t.btn;
             document.getElementById('ui-loading').textContent = t.loading;
+            document.getElementById('ui-wait-msg').textContent = t.waitMsg;
             document.getElementById('ui-weather-title').textContent = t.weatherTitle;
             document.getElementById('ui-outfit-title').textContent = t.outfitTitle;
             document.getElementById('ui-sources').textContent = t.sources;
+            
+            document.getElementById('ui-time-now').textContent = t.timeNow;
+            document.getElementById('ui-time-work').textContent = t.timeWork;
+            document.getElementById('ui-time-night').textContent = t.timeNight;
+
+            // Help Modal Translations
+            document.getElementById('ui-help-title').textContent = t.helpTitle;
+            document.getElementById('ui-help-step1').textContent = t.helpStep1;
+            document.getElementById('ui-help-step2').textContent = t.helpStep2;
+            document.getElementById('ui-help-step3').textContent = t.helpStep3;
+            document.getElementById('ui-help-close').textContent = t.helpClose;
+        }
+
+        function toggleHelp() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // ---------------------------------------------------------
+        // Location Logic
+        // ---------------------------------------------------------
+        function useDeviceLocation() {
+            if (!navigator.geolocation) {
+                showError("Geolocation is not supported by your browser.", 'error');
+                return;
+            }
+
+            const t = translations[currentLang];
+            const input = document.getElementById('cityInput');
+            const originalPlaceholder = input.placeholder;
+            
+            // Set Loading UI
+            input.value = "";
+            input.placeholder = t.locating;
+            input.disabled = true;
+            hideError();
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude.toFixed(4);
+                    const lon = position.coords.longitude.toFixed(4);
+                    
+                    // Input coordinates nicely
+                    input.value = `${lat}, ${lon}`;
+                    input.disabled = false;
+                    input.placeholder = originalPlaceholder;
+                    
+                    // Auto-trigger search
+                    getRecommendation();
+                },
+                (error) => {
+                    input.disabled = false;
+                    input.placeholder = originalPlaceholder;
+                    let msg = t.geoError;
+                    if (error.code === error.PERMISSION_DENIED) {
+                        msg = t.geoPermission;
+                    }
+                    showError(msg, 'error');
+                }
+            );
         }
 
         // ---------------------------------------------------------
@@ -208,6 +374,24 @@
         async function getRecommendation() {
             const cityInput = document.getElementById('cityInput').value.trim();
             const t = translations[currentLang];
+            
+            // Get selected time frame
+            const timeFrameValue = document.querySelector('input[name="timeFrame"]:checked').value;
+            let timePrompt = '';
+            
+            // Logic for new timeframes with 11 AM cutoff for Workday
+            if (timeFrameValue === 'workday') {
+                const currentHour = new Date().getHours();
+                if (currentHour < 11) {
+                    timePrompt = 'today during working hours (remaining time until 5 PM). If today is a weekend, provide advice for the next business day (Monday). Focus on office-appropriate wear.';
+                } else {
+                    timePrompt = 'the next business day (typically Mon-Fri) during working hours (9 AM - 5 PM). Focus on office-appropriate wear for the entire day.';
+                }
+            } else if (timeFrameValue === 'nightout') {
+                timePrompt = 'this evening or tonight. Focus on social/night-out attire';
+            } else {
+                timePrompt = 'current (right now)';
+            }
 
             if (!cityInput) {
                 showError(t.emptyCity, 'error');
@@ -223,27 +407,34 @@
             document.getElementById('resolvedCityText').classList.add('hidden');
 
             try {
-                // UPDATED PROMPT: Error handling and Typos
+                // Get current date string to help the AI anchor "today" vs "tomorrow"
+                const nowString = new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+
+                // UPDATED PROMPT: Added Current Time context and explicit 11am logic instruction
                 const prompt = `
-                    You are a weather assistant. The user input is: "${cityInput}".
+                    You are a weather assistant. 
+                    Current System Time: ${nowString}.
+                    The user input is: "${cityInput}".
+                    The user wants to know the weather for: **${timePrompt}**.
                     
                     Step 1: Analyze the input.
-                    - If it looks like a typo (e.g., "Almat", "Аллматык"), assume the user meant the nearest valid city (e.g., "Almaty") and proceed to find weather for THAT city.
-                    - If the input is unrecognizable, gibberish, or not a location, set "is_sample" to true and generate sample weather data for London.
+                    - If it is coordinates (lat, lon), find the weather for that exact location and the name of the nearest city/area.
+                    - If it looks like a typo, assume the nearest valid city.
+                    - If the input is unrecognizable, set "is_sample" to true and generate sample data for London.
 
                     Step 2: Generate Response in ${t.promptLang}.
                     
                     Return a JSON object with this structure:
                     {
-                        "resolved_city_name": "The actual city name you found weather for",
+                        "resolved_city_name": "The actual city name/area",
                         "is_sample": boolean, 
-                        "weather_summary": "Current temperature and conditions in ${t.promptLang}",
+                        "weather_summary": "A short sentence describing the requested weather (temperature & conditions) in ${t.promptLang}. IMPORTANT: You MUST include the specific target Date (e.g., 'Monday, Nov 24') in this summary.",
                         "outfits": [
-                            { "style": "Casual", "suggestion": "Suggestion in ${t.promptLang}..." },
-                            { "style": "Work / Smart", "suggestion": "Suggestion in ${t.promptLang}..." },
-                            { "style": "Active / Cozy", "suggestion": "Suggestion in ${t.promptLang}..." }
+                            { "style": "Option 1", "suggestion": "Suggestion in ${t.promptLang}..." },
+                            { "style": "Option 2", "suggestion": "Suggestion in ${t.promptLang}..." },
+                            { "style": "Option 3", "suggestion": "Suggestion in ${t.promptLang}..." }
                         ],
-                        "icon_hint": "sun|rain|cloud|snow|wind" 
+                        "icon_hint": "sun|rain|cloud|snow|wind|moon" 
                     }
                     
                     Do not include markdown code blocks, just the raw JSON string.
@@ -370,13 +561,14 @@
                 'rain': 'fa-cloud-showers-heavy',
                 'cloud': 'fa-cloud',
                 'snow': 'fa-snowflake',
-                'wind': 'fa-wind'
+                'wind': 'fa-wind',
+                'moon': 'fa-moon'
             };
             const iconClass = iconMap[data.icon_hint] || 'fa-cloud-sun';
             const iconContainer = document.querySelector('.bg-orange-100 i');
             iconContainer.className = `fa-solid ${iconClass} text-xl`;
 
-            // 6. Handle Sources (only show if not sample data usually, but we can show if provided)
+            // 6. Handle Sources
             sourcesList.innerHTML = '';
             if (sources.length > 0 && !data.is_sample) {
                 sourcesSection.classList.remove('hidden');
