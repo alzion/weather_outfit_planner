@@ -196,7 +196,7 @@
         // ---------------------------------------------------------
         // Configuration
         // ---------------------------------------------------------
-        const apiKey = '/api/weather';
+        const apiKey = ""; 
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
         // ---------------------------------------------------------
@@ -291,8 +291,37 @@
 
         let currentLang = 'en';
 
+        // ---------------------------------------------------------
+        // Auto-Detect Language
+        // ---------------------------------------------------------
+        function detectSystemLanguage() {
+            const browserLang = navigator.language || navigator.userLanguage; 
+            // Check if language starts with supported codes (e.g., "ru-RU" -> "ru")
+            if (browserLang.startsWith('ru')) {
+                currentLang = 'ru';
+            } else if (browserLang.startsWith('kk')) {
+                currentLang = 'kk';
+            } else {
+                currentLang = 'en';
+            }
+            
+            // Update the dropdown to match
+            const selector = document.getElementById('languageSelect');
+            if(selector) {
+                selector.value = currentLang;
+            }
+
+            // Apply the language
+            changeLanguage();
+        }
+
         function changeLanguage() {
-            currentLang = document.getElementById('languageSelect').value;
+            // If called via dropdown change, update currentLang
+            const selector = document.getElementById('languageSelect');
+            if (selector) {
+                currentLang = selector.value;
+            }
+            
             const t = translations[currentLang];
 
             document.getElementById('ui-title').textContent = t.title;
@@ -617,6 +646,9 @@
                 getRecommendation();
             }
         });
+
+        // Initialize Language on Load
+        detectSystemLanguage();
     </script>
 </body>
 </html>
