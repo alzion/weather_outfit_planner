@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   const { prompt } = req.body;
   const apiKey = process.env.GEMINI_API_KEY; // We will set this in Vercel settings
 
-  const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${AIzaSyD36z4a-4fGZD4A5yvVFq3k_Cs3pzKHWTc}`;
 
   try {
     const response = await fetch(API_URL, {
